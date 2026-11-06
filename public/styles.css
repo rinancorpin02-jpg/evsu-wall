@@ -75,8 +75,9 @@ main {
 .topbar {
   display: flex;
   align-items: center;
-  padding: 16px 0 0;
+  padding: 16px 0 14px;
   width: min(1280px, calc(100% - 40px));
+  border-bottom: 1.5px solid #d7b57a;
 }
 
 .brand {
