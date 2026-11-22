@@ -7,14 +7,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
+  <body data-view="message">
     <div class="paper-grain" aria-hidden="true"></div>
-    <div class="first-screen">
     <header class="topbar">
       <div class="brand">
         <span class="crest">EV</span>
@@ -25,59 +24,70 @@
       </div>
     </header>
 
-      <section class="intro">
-        <section class="hero">
-          <h2>Say the thing you have been holding in.</h2>
-          <p class="lede">
-            Drop a confession, shoutout, or late-night thought. Nothing goes live until an admin
-            checks it, so the wall stays a little kinder than the group chat.
-          </p>
-        </section>
+    <div class="stage">
+      <nav class="view-tabs" aria-label="Views">
+        <button type="button" class="view-tab is-active" data-switch="message" aria-pressed="true">
+          Message
+        </button>
+        <button type="button" class="view-tab" data-switch="wall" aria-pressed="false">
+          The Wall
+        </button>
+      </nav>
 
-        <section id="write" class="composer-wrap">
-          <form id="confession-form" class="composer">
-            <div class="composer-head">
-              <h3>Write on the wall</h3>
-              <p>Use a nickname or stay anonymous. Keep it honest, not cruel.</p>
-            </div>
-            <div class="composer-fields">
-              <label>
-                Nickname
-                <input id="nickname" name="nickname" maxlength="40" placeholder="Anonymous" />
-              </label>
-              <label class="message-field">
-                Your message
-                <textarea
-                  id="body"
-                  name="body"
-                  required
-                  minlength="8"
-                  maxlength="10000"
-                  rows="7"
-                  placeholder="What’s on your mind?"
-                ></textarea>
+      <div class="first-screen" id="message-view">
+        <section class="intro">
+          <section class="hero">
+            <h2>Say the thing you have been holding in.</h2>
+            <p class="lede">
+              Drop a confession, shoutout, or late-night thought. Nothing goes live until an admin
+              checks it, so the wall stays a little kinder than the group chat.
+            </p>
+          </section>
+
+          <section id="write" class="composer-wrap">
+            <form id="confession-form" class="composer">
+              <div class="composer-head">
+                <h3>Write on the wall</h3>
+                <p>Use a nickname or stay anonymous. Keep it honest, not cruel.</p>
+              </div>
+              <div class="composer-fields">
+                <label>
+                  Nickname
+                  <input id="nickname" name="nickname" maxlength="40" placeholder="Anonymous" />
+                </label>
+                <label class="message-field">
+                  Your message
+                  <textarea
+                    id="body"
+                    name="body"
+                    required
+                    minlength="8"
+                    maxlength="10000"
+                    rows="5"
+                    placeholder="What’s on your mind?"
+                  ></textarea>
+                </label>
+              </div>
+              <div class="composer-foot">
                 <span id="char-count">0 / 10000</span>
-              </label>
-            </div>
-            <div class="composer-foot">
-              <button type="submit">Send</button>
-            </div>
-            <p id="form-status" class="status" role="status"></p>
-          </form>
+                <button type="submit">Send</button>
+              </div>
+              <p id="form-status" class="status" role="status"></p>
+            </form>
+          </section>
         </section>
-      </section>
-      <a id="scroll-hint" class="scroll-hint" href="#approved-notes">Approved notes below</a>
-    </div>
+      </div>
 
-    <main>
-      <section id="approved-notes" class="wall">
-        <div class="wall-head">
-          <h3>Approved notes</h3>
-          <p>These already made it past review.</p>
-        </div>
-        <div id="notes" class="notes"></div>
-      </section>
-    </main>
+      <main id="wall-view">
+        <section id="approved-notes" class="wall">
+          <div class="wall-head">
+            <h3>Approved notes</h3>
+            <p>These already made it past review.</p>
+          </div>
+          <div id="notes" class="notes"></div>
+        </section>
+      </main>
+    </div>
 
     <dialog id="sent-dialog" class="sent-dialog">
       <div class="sent-card">

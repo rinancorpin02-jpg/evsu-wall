@@ -19,8 +19,16 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function formatDate(iso) {
-  return new Date(iso).toLocaleString();
+function formatAgo(iso) {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const minutes = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.round(hours / 24);
+  return `${days} d ago`;
 }
 
 function actionButtons(message) {
@@ -63,10 +71,10 @@ async function refresh() {
 function render() {
   const { counts, messages } = cache;
   countsEl.innerHTML = `
-    <article><span>Total</span><strong>${counts.total || 0}</strong></article>
-    <article><span>Pending</span><strong>${counts.pending || 0}</strong></article>
-    <article><span>Approved</span><strong>${counts.approved || 0}</strong></article>
-    <article><span>Rejected</span><strong>${counts.rejected || 0}</strong></article>
+    <article class="total"><span>Total</span><strong>${counts.total || 0}</strong></article>
+    <article class="pending"><span>Pending</span><strong>${counts.pending || 0}</strong></article>
+    <article class="approved"><span>Approved</span><strong>${counts.approved || 0}</strong></article>
+    <article class="rejected"><span>Rejected</span><strong>${counts.rejected || 0}</strong></article>
   `;
 
   const filtered =
@@ -81,14 +89,9 @@ function render() {
     .map(
       (message) => `
       <article class="card">
-        <div class="card-top">
-          <div>
-            <strong>${escapeHtml(message.nickname)}</strong>
-            <div class="meta">${formatDate(message.createdAt)}</div>
-          </div>
-          <span class="badge ${escapeHtml(message.status)}">${escapeHtml(message.status)}</span>
-        </div>
+        <span class="badge ${escapeHtml(message.status)}">${escapeHtml(message.status)}</span>
         <p>${escapeHtml(message.body)}</p>
+        <div class="meta">${escapeHtml(message.nickname)} · ${escapeHtml(formatAgo(message.createdAt))}</div>
         <div class="actions">${actionButtons(message)}</div>
       </article>
     `

@@ -1,3 +1,19 @@
+const viewButtons = document.querySelectorAll("[data-switch]");
+
+function setView(view) {
+  document.body.dataset.view = view;
+  viewButtons.forEach((button) => {
+    const on = button.dataset.switch === view;
+    button.classList.toggle("is-active", on);
+    button.setAttribute("aria-pressed", String(on));
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+viewButtons.forEach((button) => {
+  button.addEventListener("click", () => setView(button.dataset.switch));
+});
+
 const form = document.getElementById("confession-form");
 const bodyInput = document.getElementById("body");
 const charCount = document.getElementById("char-count");
@@ -15,23 +31,28 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function formatDate(iso) {
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+function formatAgo(iso) {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const minutes = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
 }
 
-bodyInput.addEventListener("input", () => {
-  charCount.textContent = `${bodyInput.value.length} / 10000`;
+bodyInput?.addEventListener("input", () => {
+  if (charCount) charCount.textContent = `${bodyInput.value.length} / 10000`;
 });
 
 async function loadNotes() {
   const response = await fetch("/api/messages");
   const data = await response.json();
   const messages = data.messages || [];
+
+  if (!notesEl) return;
 
   if (!messages.length) {
     notesEl.innerHTML =
@@ -40,33 +61,44 @@ async function loadNotes() {
   }
 
   notesEl.innerHTML = messages
-    .map((message, index) => {
-      const tilt = ((index % 5) - 2) * 1.2;
+    .map((message) => {
+      const name = escapeHtml(message.nickname);
+      const ago = escapeHtml(formatAgo(message.createdAt));
       return `
-        <article style="--tilt: ${tilt}deg">
-          <div class="meta">
-            <span>${escapeHtml(message.nickname)}</span>
-            <span>${formatDate(message.createdAt)}</span>
-          </div>
+        <article>
           <p>${escapeHtml(message.body)}</p>
+          <div class="note-foot">
+            <span>${name} · ${ago}</span>
+            <button type="button" class="heart" aria-label="Like" aria-pressed="false">♡</button>
+          </div>
         </article>
       `;
     })
     .join("");
 }
 
-const sendButton = form.querySelector('button[type="submit"]');
+notesEl?.addEventListener("click", (event) => {
+  const heart = event.target.closest(".heart");
+  if (!heart) return;
+  const liked = heart.getAttribute("aria-pressed") === "true";
+  heart.setAttribute("aria-pressed", String(!liked));
+  heart.textContent = liked ? "♡" : "♥";
+});
 
-form.addEventListener("submit", async (event) => {
+const sendButton = form?.querySelector('button[type="submit"]');
+
+form?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (sendButton.disabled) return;
+  if (!sendButton || sendButton.disabled) return;
   sendButton.disabled = true;
-  statusEl.className = "status";
-  statusEl.textContent = "Sending…";
+  if (statusEl) {
+    statusEl.className = "status";
+    statusEl.textContent = "Sending…";
+  }
 
   const payload = {
-    nickname: document.getElementById("nickname").value,
-    body: bodyInput.value,
+    nickname: document.getElementById("nickname")?.value || "",
+    body: bodyInput?.value || "",
   };
 
   try {
@@ -80,13 +112,17 @@ form.addEventListener("submit", async (event) => {
       throw new Error(data.error || "Could not send your note.");
     }
     form.reset();
-    charCount.textContent = "0 / 10000";
-    statusEl.className = "status";
-    statusEl.textContent = "";
+    if (charCount) charCount.textContent = "0 / 10000";
+    if (statusEl) {
+      statusEl.className = "status";
+      statusEl.textContent = "";
+    }
     showSentModal();
   } catch (error) {
-    statusEl.className = "status err";
-    statusEl.textContent = error.message;
+    if (statusEl) {
+      statusEl.className = "status err";
+      statusEl.textContent = error.message;
+    }
   } finally {
     window.setTimeout(() => {
       sendButton.disabled = false;
@@ -95,7 +131,9 @@ form.addEventListener("submit", async (event) => {
 });
 
 loadNotes().catch(() => {
-  notesEl.innerHTML = '<p class="empty">Could not load the wall right now.</p>';
+  if (notesEl) {
+    notesEl.innerHTML = '<p class="empty">Could not load the wall right now.</p>';
+  }
 });
 
 function showSentModal() {
@@ -116,16 +154,3 @@ sentDialog?.addEventListener("close", () => {
   document.body.classList.remove("modal-open");
   window.clearTimeout(sentTimer);
 });
-
-const scrollHint = document.getElementById("scroll-hint");
-const approvedNotes = document.getElementById("approved-notes");
-
-if (scrollHint && approvedNotes && "IntersectionObserver" in window) {
-  const noteWatcher = new IntersectionObserver(
-    ([entry]) => {
-      scrollHint.classList.toggle("is-hidden", entry.isIntersecting);
-    },
-    { threshold: 0.18, rootMargin: "0px 0px -8% 0px" }
-  );
-  noteWatcher.observe(approvedNotes);
-}
